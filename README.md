@@ -1,4 +1,4 @@
-Jersey/Spring/Gson/Spring security Webservices
+Jersey/Spring/Gson Webservices
 ===========
 
 Webservices provider and client.
