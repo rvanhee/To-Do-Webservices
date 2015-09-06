@@ -10,6 +10,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -25,113 +26,135 @@ public class TaskWSConsummer {
 
 
 	private String url = "http://localhost:8080/testJersey/api/v1/tasks";
-	
+
 	public HttpClient client = new DefaultHttpClient();
 	private Gson gson = new Gson();	
 
-	
+
 	public Task post(Task task) throws Exception{
-
-		String jsonRepresentation = new Gson().toJson(task);	
-		StringEntity se = new StringEntity(jsonRepresentation);
-
 		HttpPost httpPost = new HttpPost(url);
-		httpPost.addHeader("Content-Type", "application/json");
-		httpPost.setEntity(se);
-		
-		
-		Reader reader = executeRequest(httpPost);
-		if (reader != null){
-			task = gson.fromJson(reader,  Task.class);
-			return task;
-		} else {
-			throw new Exception("reader is null");
+
+		try{
+			String jsonRepresentation = new Gson().toJson(task);	
+			StringEntity se = new StringEntity(jsonRepresentation);
+
+
+			httpPost.addHeader("Content-Type", "application/json");
+			httpPost.setEntity(se);
+
+
+			Reader reader = executeRequest(httpPost);
+			if (reader != null){
+				task = gson.fromJson(reader,  Task.class);
+				return task;
+			} else {
+				throw new Exception("reader is null");
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			httpPost.releaseConnection();			
 		}
 
 	}
-	
-	
+
+
 	public Task put(Task task) throws Exception{
 
-		String jsonRepresentation = new Gson().toJson(task);	
-		StringEntity se = new StringEntity(jsonRepresentation);
-
 		HttpPut httpPut = new HttpPut(url + "/" + task.getUuid());
-		httpPut.addHeader("Content-Type", "application/json");
-		httpPut.setEntity(se);
-		
-		
-		Reader reader = executeRequest(httpPut);
-		if (reader != null){
-			task = gson.fromJson(reader,  Task.class);
-			return task;
-		} else {
-			throw new Exception("reader is null");
-		}
+		try{
+			String jsonRepresentation = new Gson().toJson(task);	
+			StringEntity se = new StringEntity(jsonRepresentation);
 
+
+			httpPut.addHeader("Content-Type", "application/json");
+			httpPut.setEntity(se);
+
+
+			Reader reader = executeRequest(httpPut);
+			if (reader != null){
+				task = gson.fromJson(reader,  Task.class);
+				return task;
+			} else {
+				throw new Exception("reader is null");
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			httpPut.releaseConnection();			
+		}
 	}
 
 	public void delete(String uuid) throws Exception{
 
-		HttpPut httpPut = new HttpPut(url + "/" + uuid);
-		httpPut.addHeader("Content-Type", "application/json");
-		
-		executeRequest(httpPut);
+		HttpDelete httpDelete = new HttpDelete(url + "/" + uuid);
+		try{
+			httpDelete.addHeader("Content-Type", "application/json");
+
+			executeRequest(httpDelete);
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			httpDelete.releaseConnection();			
+		}
 	}
 
 
 	public Task get(String uuid) throws Exception{
 
 		HttpGet httpGet = new HttpGet(url + "/" + uuid);
-		
-		Reader reader = executeRequest(httpGet);
+		try{
+			Reader reader = executeRequest(httpGet);
 
-		if (reader != null){
-			Gson gson = new Gson();			
-			return gson.fromJson(reader,  Task.class);
-		} else {
-			throw new Exception("reader is null");
+			if (reader != null){
+				Gson gson = new Gson();			
+				return gson.fromJson(reader,  Task.class);
+			} else {
+				throw new Exception("reader is null");
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			httpGet.releaseConnection();			
 		}
 	}
 
 
 	public List<Task> getAll() throws Exception{
-		
 		HttpGet httpGet = new HttpGet(url);
-		
-		Reader reader = executeRequest(httpGet);
+		try{
+			Reader reader = executeRequest(httpGet);
 
-		if (reader != null){
-			Gson gson = new Gson();		
-			Type collectionType = new TypeToken<List<Task>>(){}.getType();
-			List<Task> tasks = gson.fromJson(reader, collectionType);
+			if (reader != null){
+				Gson gson = new Gson();		
+				Type collectionType = new TypeToken<List<Task>>(){}.getType();
+				List<Task> tasks = gson.fromJson(reader, collectionType);
 
-			return tasks;
-		} else {
-			throw new Exception("reader is null");
+				return tasks;
+			} else {
+				throw new Exception("reader is null");
+			}
+		} catch (Exception e) {
+			throw e;
+		} finally {
+			httpGet.releaseConnection();			
 		}
 	}
 
 
 	private Reader executeRequest(HttpRequestBase httpRequest) throws Exception{
-		try {	
-			HttpResponse response = client.execute(httpRequest);
-			StatusLine statusLine = response.getStatusLine();
-			if (statusLine.getStatusCode() == 200 || statusLine.getStatusCode() == 201) {
-				HttpEntity entity = response.getEntity();
-				InputStream inputStream = entity.getContent();
-				Reader reader = new InputStreamReader(inputStream);
-				return reader;
-			} else if (statusLine.getStatusCode() == 204){
-				return null;
-			}else {
-				throw new Exception(statusLine.getStatusCode() + "");
-			}
 
-		} catch (Exception e) {
-			throw e;
-		} finally {
-			httpRequest.releaseConnection();			
+		HttpResponse response = client.execute(httpRequest);
+		StatusLine statusLine = response.getStatusLine();
+		if (statusLine.getStatusCode() == 200 || statusLine.getStatusCode() == 201) {
+			HttpEntity entity = response.getEntity();
+			InputStream inputStream = entity.getContent();
+			Reader reader = new InputStreamReader(inputStream);
+			return reader;
+		} else if (statusLine.getStatusCode() == 204){
+			return null;
+		}else {
+			throw new Exception(statusLine.getStatusCode() + "");
 		}
 	}
 
