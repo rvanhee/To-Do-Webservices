@@ -1,11 +1,15 @@
 package com.testJersey.client;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.junit.Test;
+
+
 
 
 
@@ -47,6 +51,62 @@ public class TaskWSTest extends TestCase{
 	
 	
 	@Test
+	public void testDeleteTask(){
+		try{
+			Task task = new Task("", "title", "description", false);
+			task = taskWSConsummer.post(task);
+
+			Task task2 = new Task("", "title2", "description2", false);
+			task2 = taskWSConsummer.post(task2);
+
+			List<Task> tasks = taskWSConsummer.getAll();
+			assertEquals(2, tasks.size());
+			
+			taskWSConsummer.delete(task.getUuid());
+			
+			tasks = taskWSConsummer.getAll();
+			assertEquals(1, tasks.size());
+			assertEquals(task2.getUuid(), tasks.get(0).getUuid());
+			assertEquals("title2", tasks.get(0).getTitle());
+
+		} catch(Exception e) {
+			fail();
+		}
+	}
+
+	@Test
+	public void testGetAllTasks(){
+		try{
+			Task task = new Task("", "title", "description", false);
+			task = taskWSConsummer.post(task);
+
+			Task task2 = new Task("", "title2", "description2", false);
+			task2 = taskWSConsummer.post(task2);
+			
+			Task task3 = new Task("", "title3", "description3", false);
+			task3 = taskWSConsummer.post(task3);
+
+			List<Task> tasks = taskWSConsummer.getAll();
+			assertEquals(3, tasks.size());
+			
+			Set<String> set = new HashSet<String>();
+			set.add("title");
+			set.add("title2");
+			set.add("title3");
+			
+			for (Task returnedTask : tasks){
+				set.remove(returnedTask.getTitle());		
+			}
+			
+			assertEquals(0, set.size());
+			
+		} catch(Exception e) {
+			fail();
+		}
+	}
+	
+	
+	@Test
 	public void testPostTask(){
 		try{
 			Task task = new Task("", "title", "description", false);
@@ -72,16 +132,22 @@ public class TaskWSTest extends TestCase{
 		try{
 			Task task = new Task("", "title", "description", false);
 			task = taskWSConsummer.post(task);
-			
+				
+			Task returnedTask1 = taskWSConsummer.get(task.getUuid());
+			assertEquals("description", returnedTask1.getDescription());
 			
 			task.setDescription("Updated description");
 
-			Task returnedTask = taskWSConsummer.put(task);
+			taskWSConsummer.put(task);
+			Task returnedTask = taskWSConsummer.get(task.getUuid());
 			
 			assertEquals(task.getUuid(), returnedTask.getUuid());
 			assertEquals("Updated description", returnedTask.getDescription());
 			assertEquals(task.getDescription(), returnedTask.getDescription());
 		
+			List<Task> tasks = taskWSConsummer.getAll();
+			assertEquals(1, tasks.size());
+			
 		} catch(Exception e) {
 			fail();
 		}
